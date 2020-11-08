@@ -60,7 +60,7 @@ public class BlackAndWhite {
 //    private void renewBoardSpecificDirection(int color, int x, int y, int left){}
 
     // 下一步新棋，更新棋盘，这一步还没有把新子写入
-    public boolean renewBoard(int color, int x, int y) {
+    public void renewBoard(int color, int x, int y) {
         // right
         for (int i = x + 1; i < 8; i++) {
             if (board[i][y] == 0) {
@@ -105,8 +105,29 @@ public class BlackAndWhite {
             return false;
         }
         renewBoard(color, x, y);
-
+        for (int i=0;i<8;i++){
+            for (int j=0;j<8;j++){
+                if (canTrump(-color, i, j)){
+                    return true;
+                }
+            }
+        }
         return false;
+    }
+
+    //{-1, -1}: 电脑输了
+    public int[] getNextStep(int color, int x, int y){
+        int[]result = {-1, -1};
+        for (int i=0; i<8;i++){
+            for (int j=0;j<8; j++){
+                if (canTrump(color, i, j)){
+                    result[0] = i;
+                    result[1] = j;
+                    return result;
+                }
+            }
+        }
+        return result;
     }
 
     public static void main(String[] args) {
