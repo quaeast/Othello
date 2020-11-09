@@ -64,7 +64,7 @@ public class BlackAndWhite {
         return false;
     }
 
-    // judge if a specify position is valid to place the token
+    // determine whether a specify position is valid to place the token
     public boolean isValid(int color, int x, int y) {
         List<int[]> positionList = getPositionsOfSpecifiedColor(color);
         if (board[x][y] != 0) {
@@ -95,7 +95,7 @@ public class BlackAndWhite {
         return result;
     }
 
-    // if there is of valid position in the whole board
+    // whether there is of valid position in the whole board
     public boolean hasPlaceToPut(int color) {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
