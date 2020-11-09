@@ -1,5 +1,6 @@
-import java.util.ArrayList;
-import java.util.List;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
+
+import java.util.*;
 
 public class BlackAndWhite {
     // 0 empty
@@ -7,12 +8,13 @@ public class BlackAndWhite {
     // -1 black
     int[][] board = new int[8][8];
 
+
     // black first
     public void reset() {
         board[3][3] = 1;
         board[4][4] = 1;
-        board[3][4] = 2;
-        board[4][3] = 2;
+        board[3][4] = -1;
+        board[4][3] = -1;
     }
 
 
@@ -29,19 +31,36 @@ public class BlackAndWhite {
         return result;
     }
 
+    private boolean isValid0(int color, int x, int y, int toX, int toY) {
+        boolean hasReverseColor = false;
+        for (int i = x + toX, j = y + toY; i < 8 && i >= 0 && j < 8 && j >= 0; i += toX, j += toY) {
+            if (board[i][j] == 0) {
+                return false;
+            }
+            if (board[i][j] == -color) {
+                hasReverseColor = true;
+            }
+            if (board[i][j] == color) {
+                return hasReverseColor;
+            }
+        }
+        return false;
+    }
+
     public boolean isValid(int color, int x, int y) {
         List<int[]> positionList = getPositionsOfSpecifiedColor(color);
         if (board[x][y] != 0) {
             return false;
         }
-        for (int[] position : positionList) {
-            if (position[0] == x || position[1] == y
-                    || position[0] - position[1] == x - y
-                    || position[0] + position[1] == x + y) {
-                return true;
-            }
-        }
-        return false;
+        boolean isValidResult = isValid0(color, x, y, 1, 0) ||
+                isValid0(color, x, y, -1, 0) ||
+                isValid0(color, x, y, 0, 1) ||
+                isValid0(color, x, y, 0, -1) ||
+                isValid0(color, x, y, 1, 1) ||
+                isValid0(color, x, y, -1, -1) ||
+                isValid0(color, x, y, -1, 1) ||
+                isValid0(color, x, y, 1, -1);
+        return isValidResult;
     }
 
     public List<int[]> getValidPositions(int color) {
@@ -57,47 +76,44 @@ public class BlackAndWhite {
         return result;
     }
 
-//    private void renewBoardSpecificDirection(int color, int x, int y, int left){}
+    public int[][] copyBoard() {
+        int[][] newBoard = new int[8][8];
+        for (int i = 0; i < 8; i++) {
+            System.arraycopy(board[i], 0, newBoard[i], 0, 8);
+        }
+        return newBoard;
+    }
+
+    private void renewBoard0(int color, int x, int y, int toX, int toY) {
+        for (int i = x + toX, j = y + toY; i < 8 && i >= 0 && j < 8 && j >= 0; i += toX, j += toY) {
+            if (board[i][j] == 0) {
+                break;
+            }
+            if (board[i][j] == color) {
+                for (int iv = i, jv = j; iv != x && jv != y; iv -= toX, jv -= toY) {
+                    board[iv][y] = color;
+                }
+                break;
+            }
+        }
+    }
 
     // 下一步新棋，更新棋盘，这一步还没有把新子写入
-    public void renewBoard(int color, int x, int y) {
-        // right
-        for (int i = x + 1; i < 8; i++) {
-            if (board[i][y] == 0) {
-                break;
-            }
-            if (board[i][y] == color) {
-                for (int iv = i; iv > x; iv--) {
-                    board[iv][y] = color;
-                }
-                break;
-            }
+    public int[][] renewBoard(int color, int x, int y) {
+        int[][] originalBoard = copyBoard();
+        if (!isValid(color, x, y)) {
+            return null;
         }
-        // left
-        for (int i = x - 1; i >= 0; i--) {
-            if (board[i][y] == 0) {
-                break;
-            }
-            if (board[i][y] == color) {
-                for (int iv = i; iv < x; iv++) {
-                    board[iv][y] = color;
-                }
-                break;
-            }
-        }
-        // down
-        for (int j = y + 1; j < 8; j++) {
-            if (board[x][j] == 0) {
-                break;
-            }
-            if (board[x][j] == color) {
-                for (int jv = j; jv > y; j--) {
-                    board[x][jv] = color;
-                }
-                break;
-            }
-        }
-        // up....
+        board[x][y] = color;
+        renewBoard0(color, x, y, 1, 0);
+        renewBoard0(color, x, y, -1, 0);
+        renewBoard0(color, x, y, 0, 1);
+        renewBoard0(color, x, y, 0, -1);
+        renewBoard0(color, x, y, 1, 1);
+        renewBoard0(color, x, y, -1, -1);
+        renewBoard0(color, x, y, -1, 1);
+        renewBoard0(color, x, y, 1, -1);
+        return originalBoard;
     }
 
     public boolean canTrump(int color, int x, int y) {
@@ -105,9 +121,9 @@ public class BlackAndWhite {
             return false;
         }
         renewBoard(color, x, y);
-        for (int i=0;i<8;i++){
-            for (int j=0;j<8;j++){
-                if (canTrump(-color, i, j)){
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (canTrump(-color, i, j)) {
                     return true;
                 }
             }
@@ -116,11 +132,11 @@ public class BlackAndWhite {
     }
 
     //{-1, -1}: 电脑输了
-    public int[] getNextStep(int color, int x, int y){
-        int[]result = {-1, -1};
-        for (int i=0; i<8;i++){
-            for (int j=0;j<8; j++){
-                if (canTrump(color, i, j)){
+    public int[] getNextStep(int color, int x, int y) {
+        int[] result = {-1, -1};
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (canTrump(color, i, j)) {
                     result[0] = i;
                     result[1] = j;
                     return result;
@@ -130,14 +146,50 @@ public class BlackAndWhite {
         return result;
     }
 
-    public static void main(String[] args) {
-        BlackAndWhite blackAndWhite = new BlackAndWhite();
+    public boolean hasPlaceToPut(int color) {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                System.out.println(blackAndWhite.board[i][j]);
+                if (isValid(color, i, j)) {
+                    return true;
+                }
             }
         }
-        int[] a = new int[10];
+        return false;
+    }
+
+    public void showBoard() {
+        for (int i=0; i<9;i++){
+            System.out.printf( "%2d ", i-1);
+        }
+        System.out.println();
+        for (int i = 0; i < 8; i++) {
+            System.out.printf( "%2d ", i);
+            for (int j = 0; j < 8; j++) {
+                System.out.printf( "%2d", board[i][j]);
+                System.out.print(" ");
+            }
+            System.out.println();
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        HashMap<Integer, String> colorMapping = new HashMap<>();
+        colorMapping.put(1, "white");
+        colorMapping.put(-1, "black");
+        BlackAndWhite blackAndWhite = new BlackAndWhite();
+        blackAndWhite.reset();
+        int color = -1;
+
+        while (blackAndWhite.hasPlaceToPut(color)){
+            blackAndWhite.showBoard();
+            System.out.println(colorMapping.get(color)+"'s turn: ");
+            int[] position = {scanner.nextInt(), scanner.nextInt()};
+            if (blackAndWhite.renewBoard(color, position[0], position[1])!=null){
+                color = -color;
+            }
+        }
+        System.out.println(colorMapping.get(color)+ " lose");
     }
 }
 
