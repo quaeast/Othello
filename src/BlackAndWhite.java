@@ -90,8 +90,8 @@ public class BlackAndWhite {
                 break;
             }
             if (board[i][j] == color) {
-                for (int iv = i, jv = j; iv != x && jv != y; iv -= toX, jv -= toY) {
-                    board[iv][y] = color;
+                for (int iv = i, jv = j; iv != x || jv != y; iv -= toX, jv -= toY) {
+                    board[iv][jv] = color;
                 }
                 break;
             }
